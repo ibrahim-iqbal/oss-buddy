@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
-# oss buddy — point it at a repo, local gemma picks a weekend-sized issue.
-# stdlib + gh + ollama. no pip install.
+# oss buddy — point it at a repo, get a weekend-sized way in.
+#
+# a friend of mine kept opening huge oss repos and bouncing off.
+# this reads the repo for him and says "here, pick one of these three."
+#
+# stdlib + gh + ollama. no pip install, no api keys.
 
 import argparse
 import base64
@@ -14,6 +18,8 @@ from urllib.error import URLError
 OLLAMA = "http://localhost:11434/api/generate"
 DEFAULT_MODEL = "gemma3:4b"
 
+# token budgets — gemma 4b handles a few thousand chars fine.
+# bigger and the "where to start" part gets vaguer, not sharper.
 README_CAP = 4000
 TREE_CAP = 60
 ISSUE_CAP = 10
@@ -43,10 +49,12 @@ def gh(*args):
     except FileNotFoundError:
         sys.exit(red("gh not installed → https://cli.github.com"))
     except subprocess.CalledProcessError as e:
+        # some endpoints 404 (no CONTRIBUTING etc) — let callers decide
         raise RuntimeError(e.stderr.strip())
 
 
 def gh_file(repo, path):
+    """fetch one file via the contents api, decoded."""
     raw = gh("api", f"repos/{repo}/contents/{path}", "--jq", ".content")
     return base64.b64decode(raw.strip()).decode("utf-8", errors="replace")
 
@@ -67,8 +75,19 @@ def tree_of(repo):
         return "(empty)"
 
 
+def contributing_of(repo):
+    # try a few spots. keeps the model from defaulting to "read CONTRIBUTING.md"
+    # when there isn't one.
+    for p in ("CONTRIBUTING.md", "docs/CONTRIBUTING.md", ".github/CONTRIBUTING.md"):
+        try:
+            return gh_file(repo, p)[:1500]
+        except RuntimeError:
+            continue
+    return ""
+
+
 def issues_of(repo):
-    # github labels aren't consistent across projects — try the common spellings
+    # github labels aren't consistent — try the common spellings.
     for label in ("good first issue", "good-first-issue", "beginner"):
         encoded = label.replace(" ", "%20")
         try:
@@ -77,7 +96,7 @@ def issues_of(repo):
                 f"repos/{repo}/issues?labels={encoded}&state=open&per_page={ISSUE_CAP}",
                 "--jq",
                 '[.[] | select(.pull_request == null) | '
-                '{num:.number, title:.title, '
+                '{num:.number, title:.title, labels:[.labels[].name], '
                 'body:(.body // "" | .[0:400])}]',
             )
             parsed = json.loads(raw)
@@ -88,23 +107,28 @@ def issues_of(repo):
     return []
 
 
-PROMPT = """You are OSS Buddy. Help a friend who wants to start contributing to open source.
-Keep it short and friendly. No jargon.
+PROMPT = """You are OSS Buddy. You help a friend who wants to start contributing to open source.
+Keep answers SHORT, warm, in plain words. No jargon. No sign-off, no "would you like me to..." outro.
 
-Do three things for the repo below:
+Do three things for the repo below, in this order, nothing more:
 
-PART 1 — What it does, in 2-3 sentences.
+PART 1 — What it does (2-3 sentences a non-developer can grasp).
 
-PART 2 — Rank up to 3 "good first issues" from easiest to hardest. For each: issue number, 1 sentence
-why it is beginner-friendly, and a time estimate.
+PART 2 — Pick up to 3 "good first issues" my friend could realistically ship this weekend,
+ranked easiest to hardest. For each issue:
+- Quote the issue number and the EXACT title from the data below. Do not paraphrase or invent.
+- One sentence on why it's beginner-friendly.
+- Rough time estimate (minutes or hours).
+If none of the listed issues look good, say so plainly.
 
-PART 3 — Where in the repo to start reading.
+PART 3 — Where in the repo to start reading. Name 2-3 specific directories or files from the
+TOP-LEVEL FILES list (e.g. "look at `app/`, then open `README.md`"). No generic advice. 2 sentences max.
 
 --- REPO: {repo} ---
 
 TOP-LEVEL FILES:
 {tree}
-
+{contrib_block}
 README (truncated):
 {readme}
 
@@ -113,12 +137,13 @@ OPEN GOOD-FIRST-ISSUES:
 """
 
 
-def build_prompt(repo, readme, tree, issues):
+def build_prompt(repo, readme, tree, contributing, issues):
     return PROMPT.format(
         repo=repo,
         tree=tree,
+        contrib_block=f"\nCONTRIBUTING NOTES:\n{contributing}\n" if contributing else "",
         readme=readme,
-        issues=json.dumps(issues, indent=2) if issues else "(none)",
+        issues=json.dumps(issues, indent=2) if issues else "(none open with that label)",
     )
 
 
@@ -149,22 +174,25 @@ def ask_ollama(prompt, model):
 def main():
     ap = argparse.ArgumentParser(description="oss buddy — local-ai pointer for new oss contributors")
     ap.add_argument("repo", help="owner/repo or github url")
-    ap.add_argument("--model", default=DEFAULT_MODEL)
+    ap.add_argument("--model", default=DEFAULT_MODEL, help=f"ollama model (default: {DEFAULT_MODEL})")
     args = ap.parse_args()
 
     repo = parse_repo(args.repo)
+
     print(cyan("\n  oss buddy "), dim(f"looking at {repo}"))
     print(dim("  pulling readme, tree, issues ..."))
 
     readme = readme_of(repo)
     tree = tree_of(repo)
+    contributing = contributing_of(repo)
     issues = issues_of(repo)
 
     print(dim(f"  {len(issues)} good-first-issues found"))
     print(dim(f"  asking {args.model} (running on your laptop)\n"))
     print(green("─" * 60))
-    ask_ollama(build_prompt(repo, readme, tree, issues), args.model)
+    ask_ollama(build_prompt(repo, readme, tree, contributing, issues), args.model)
     print(green("─" * 60))
+    print(dim("\n  gemma 3 via ollama. nothing left your machine.\n"))
 
 
 if __name__ == "__main__":
