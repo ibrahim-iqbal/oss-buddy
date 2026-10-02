@@ -90,6 +90,9 @@ one sitting.
 challenge](https://dev.to/challenges/hacktoberfest-weekend-2026-10-01)
 — "build for a friend".
 
+the full write-up with the friend story and the open-source-AI case:
+[oss buddy: a local gemma that picks weekend-sized issues](https://dev.to/ibrahimiqbal/oss-buddy-a-local-gemma-that-picks-weekend-sized-issues-so-my-cousin-can-finally-land-his-first-pr-277f).
+
 ## license
 
 mit.
