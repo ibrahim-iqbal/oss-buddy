@@ -1,5 +1,7 @@
 # oss buddy
 
+![demo](demo.gif)
+
 point it at a github repo. a local gemma 3 model reads the readme, the
 top-level file tree, and the open `good first issue` tickets, then
 tells you:
