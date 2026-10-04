@@ -1,34 +1,34 @@
-# oss buddy
+# OSS Buddy
 
 ![demo](demo.gif)
 
-point it at a github repo. a local gemma 3 model reads the readme, the
+Point it at a GitHub repo. A local Gemma 3 model reads the README, the
 top-level file tree, and the open `good first issue` tickets, then
 tells you:
 
-1. what the project does, in plain words
-2. up to three issues that look weekend-sized, ranked easiest to hardest
-3. where in the repo to start reading
+1. What the project does, in plain words
+2. Up to three issues that look weekend-sized, ranked easiest to hardest
+3. Where in the repo to start reading
 
-nothing leaves your machine. your github token stays local. the model
-runs on your laptop via [ollama](https://ollama.com).
+Nothing leaves your machine. Your GitHub token stays local. The model
+runs on your laptop via [Ollama](https://ollama.com).
 
-## why
+## Why
 
-a friend of mine kept opening huge oss repos, scrolling for twenty
-minutes, closing the tab. he wanted to contribute. he did not know
-where to start. every guide said "pick a good first issue" and every
+A friend of mine kept opening huge OSS repos, scrolling for twenty
+minutes, closing the tab. He wanted to contribute. He did not know
+where to start. Every guide said "pick a good first issue" and every
 repo had dozens.
 
-this reads the repo for him and says "here, pick one of these three,
+This reads the repo for him and says "here, pick one of these three,
 start reading here."
 
-## install
+## Install
 
-needs python 3.9+, the github cli, and ollama.
+Needs Python 3.9+, the GitHub CLI, and Ollama.
 
 ```bash
-# ollama (macos)
+# ollama (macOS)
 brew install ollama
 brew services start ollama
 ollama pull gemma3:4b
@@ -43,7 +43,7 @@ git clone https://github.com/ibrahim-iqbal/oss-buddy.git
 cd oss-buddy
 ```
 
-## use
+## Use
 
 ```bash
 python3 oss_buddy.py owner/repo
@@ -51,48 +51,62 @@ python3 oss_buddy.py owner/repo
 python3 oss_buddy.py https://github.com/owner/repo
 ```
 
-example:
+Example:
 
 ```bash
 python3 oss_buddy.py kiwix/kiwix-android
 ```
 
-try a different model:
+Try a different model:
 
 ```bash
 python3 oss_buddy.py kiwix/kiwix-android --model gemma3:1b
 ```
 
-## sample run
+## Sample run
 
-see `examples/kiwix-android.md` for actual output on a real repo.
+See `examples/kiwix-android.md` for actual output on a real repo.
 
-## how it works
+## Benchmarks
 
-three `gh api` calls (readme, tree, issues) → one prompt → one POST to
-local ollama at `http://localhost:11434` → stream the answer back.
+Measured on an M-series Mac with Gemma 3 4B via Ollama:
 
-that is the whole pipeline. the python file is small enough to read in
+| Repo | Runtime | Good-first-issues found |
+|------|--------:|------------------------:|
+| kiwix/kiwix-android | 27.9s | 6 |
+| simonoppowa/OpenNutriTracker | 23.5s | 3 |
+| RetroMusicPlayer/RetroMusicPlayer | 22.1s | 6 |
+| neovim/neovim | 22.0s | 0 (no `good first issue` label) |
+| fastapi/fastapi | 22.0s | 0 (none open at test time) |
+
+Average ~23 seconds end to end, no cloud calls.
+
+## How it works
+
+Three `gh api` calls (README, tree, issues) → one prompt → one POST to
+local Ollama at `http://localhost:11434` → stream the answer back.
+
+That is the whole pipeline. The Python file is small enough to read in
 one sitting.
 
-## limits
+## Limits
 
-- picks beginner issues by what the maintainers labeled. mislabeled
+- Picks beginner issues by what the maintainers labeled. Mislabeled
   repo → mislabeled suggestions.
-- reads readme, tree, and short issue bodies. does not read source
-  files. for deeper analysis, open the issue and read the linked code.
-- 4b is small. for a big or unusual repo try `--model gemma3:12b` if
-  you have the ram.
+- Reads README, tree, and short issue bodies. Does not read source
+  files. For deeper analysis, open the issue and read the linked code.
+- 4B is small. For a big or unusual repo try `--model gemma3:12b` if
+  you have the RAM.
 
-## built for
+## Built for
 
-[hacktoberfest 2026 weekend
-challenge](https://dev.to/challenges/hacktoberfest-weekend-2026-10-01)
-— "build for a friend".
+The [Hacktoberfest 2026 Weekend
+Challenge](https://dev.to/challenges/hacktoberfest-weekend-2026-10-01)
+— "Build for a Friend".
 
-the full write-up with the friend story and the open-source-AI case:
-[oss buddy: a local gemma that picks weekend-sized issues](https://dev.to/ibrahimiqbal/oss-buddy-a-local-gemma-that-picks-weekend-sized-issues-so-my-cousin-can-finally-land-his-first-pr-277f).
+The full write-up with the friend story and the open-source-AI case:
+[OSS Buddy: a local Gemma that picks weekend-sized issues](https://dev.to/ibrahimiqbal/oss-buddy-a-local-gemma-that-picks-weekend-sized-issues-so-my-cousin-can-finally-land-his-first-pr-277f).
 
-## license
+## License
 
-mit.
+MIT.

@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" font-family="ui-monospace, 'SF Mono', Menlo, monospace">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0d1117"/>
+      <stop offset="1" stop-color="#161b22"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <g transform="translate(80, 90)">
+    <text x="0" y="0" fill="#8b949e" font-size="22">$</text>
+    <text x="30" y="0" fill="#c9d1d9" font-size="22">python3 oss_buddy.py kiwix/kiwix-android</text>
+  </g>
+
+  <g transform="translate(80, 200)">
+    <text x="0" y="0" fill="#f0f6fc" font-size="96" font-weight="700">OSS Buddy</text>
+    <text x="0" y="60" fill="#8b949e" font-size="28">A local Gemma picks weekend-sized</text>
+    <text x="0" y="100" fill="#8b949e" font-size="28">good-first-issues for your friend.</text>
+  </g>
+
+  <g transform="translate(80, 470)" font-size="24">
+    <text x="0" y="0" fill="#58a6ff">◉ Gemma 3 · Ollama · ~150 lines of Python</text>
+    <text x="0" y="36" fill="#3fb950">◉ Nothing leaves your machine</text>
+  </g>
+
+  <g transform="translate(1100, 540)" text-anchor="end" font-size="18" fill="#6e7681">
+    <text>Hacktoberfest 2026 · Build for a Friend</text>
+  </g>
+</svg>
